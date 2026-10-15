@@ -172,6 +172,7 @@ async function api(action,data){
       const txt=await res.text();let j=null;try{j=JSON.parse(txt)}catch(e){}
       if(!j){ if(attempt===0){await new Promise(r=>setTimeout(r,900));continue} throw new Error('Google returned an error page instead of data. Open Apps Script > Executions to see the failure, and make sure the latest Code.gs is deployed as a new version.') }
       if(!j.ok){ if(j.code==='auth'&&S.token) signOut(true); const e=new Error(j.error||'Request failed');e.code=j.code;throw e }
+      if(/^(admin\.(save|setStatus|remove|delete|saveQuestion|duplicateQuestion|setAssessmentQuestions|importCommit|userAction|assignManager|uploadResource|overrideLock|saveSettings))$/.test(action))L=null;
       return j.data;
     }
   } finally{pending--;busy()}
@@ -267,7 +268,15 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!
 document.addEventListener('submit',e=>{const f=FORM[e.target.dataset.form];if(!f)return;e.preventDefault();Promise.resolve(f(e.target)).catch(err=>{toast(err.message,'err');const b=$('button[type=submit]',e.target);if(b)b.disabled=false})});
 
 /* ---------- auth ---------- */
+function fillManagers(){
+  const sel=$('[name=managerId]'),hint=$('#mgrhint');if(!sel)return;const cur=sel.value;
+  sel.innerHTML='<option value="">Select your manager</option>'+S.info.managers.map(m=>`<option value="${esc(m.userId)}">${esc(m.fullName)}</option>`).join('');sel.value=cur;
+  if(hint)hint.textContent=S.infoLoading?'Loading managers…':S.info.managers.length?'':(S.infoErr||'No managers are registered yet. Ask your administrator.');
+}
 function authView(path){
+  if(path!=='/register')S.regFetched=false;
+  if(API&&!S.infoLoading&&(path==='/register'?!S.regFetched:!S.infoLoaded)){S.infoLoading=true;S.infoErr='';
+    api('publicInfo').then(i=>{Object.assign(S.info,i);S.infoLoaded=true}).catch(e=>{S.infoErr='Could not load managers: '+e.message+' Reload the page to retry.'}).finally(()=>{S.infoLoading=false;if(path==='/register')S.regFetched=true;fillManagers()})}
   const app=$('#app'), info=S.info, name=esc(info.portalName);
   const warn=API?'':'<div class="alert">The backend is not connected. Set <b>apiUrl</b> at the top of index.html, then reload (SETUP.md, step 5).</div>';
   const pw=`<div class="field"><label for="pw">Password</label><input id="pw" name="password" type="password" autocomplete="current-password" required></div>`;
@@ -280,7 +289,7 @@ function authView(path){
       <div class="fgrid"><div class="field"><label>Employee ID <span class="muted">(optional)</span></label><input name="employeeId" type="text"></div>
       <div class="field"><label>Your role</label><input name="jobTitle" type="text" required placeholder="e.g. Education Counsellor"></div></div>
       <div class="field"><label>Account type</label><select name="accountType" id="acct"><option value="employee">Employee / Counsellor</option><option value="manager">Manager (needs admin approval)</option></select></div>
-      <div class="field" id="mgrf"><label>Your manager</label><select name="managerId" required><option value="">Select your manager</option>${info.managers.map(m=>`<option value="${esc(m.userId)}">${esc(m.fullName)}</option>`).join('')}</select>${info.managers.length?'':'<div class="hint">No managers are registered yet. Ask your administrator.</div>'}</div>
+      <div class="field" id="mgrf"><label>Your manager</label><select name="managerId" required><option value="">Select your manager</option>${info.managers.map(m=>`<option value="${esc(m.userId)}">${esc(m.fullName)}</option>`).join('')}</select><div class="hint" id="mgrhint">${S.infoLoading?'Loading managers…':info.managers.length?'':'No managers are registered yet. Ask your administrator.'}</div></div>
       <div class="field"><label>Password</label><input name="password" type="password" autocomplete="new-password" minlength="${info.passwordMinLength||10}" required><div class="hint">At least ${info.passwordMinLength||10} characters with a letter and a number.</div></div>
       <button class="btn pri" type="submit" style="width:100%;justify-content:center">Create account</button>
     </form><p style="margin-top:14px"><a href="#/login">Back to sign in</a></p>`;
@@ -303,7 +312,7 @@ const FORM={
   async password(f){const d=Object.fromEntries(new FormData(f));const r=await api('changePassword',d);toast(r.message);setTimeout(()=>signOut(),800)}
 };
 const ACT={
-  signout(){api('logout').catch(()=>{});signOut()}, menu(){document.body.classList.toggle('nav-open')}, reload(){route()}
+  signout(){api('logout').catch(()=>{});signOut()}, menu(){document.body.classList.toggle('nav-open')}, reload(){L=null;route()}
 };
 
 /* ---------- shared: account, reports ---------- */
@@ -451,7 +460,7 @@ async function vAdminHome(){
 
 /* --- users --- */
 async function vUsers(){
-  await loadL(true);const us=L.users,mgrs=us.filter(u=>u.role==='manager'&&u.status==='active');
+  await loadL();const us=L.users,mgrs=us.filter(u=>u.role==='manager'&&u.status==='active');
   const pend=us.filter(u=>u.status==='pending');
   const acts=u=>{
     const a=[];
@@ -489,19 +498,19 @@ ACT.uaccrm=async el=>{await api('admin.assignManager',{managerId:el.dataset.m,em
 /* --- colleges --- */
 const COLLEGE_F=()=>[{k:'name',l:'College or university name',req:true},{k:'description',l:'Description',t:'textarea'},{k:'logoUrl',l:'Logo URL (optional)',t:'url'},{k:'admissionInfo',l:'Admission procedures and rules',t:'textarea',rows:5},{k:'eligibility',l:'Eligibility information',t:'textarea'},{k:'completionRule',l:'',t:'rule'}];
 async function vColleges(){
-  await loadL(true);
+  await loadL();
   return `<div class="page-h"><div><h1>Colleges and universities</h1><p class="muted">Each college has its own training page, modules, questions and completion rule.</p></div><button class="btn pri" data-a="addcol">Add college</button></div>
-  ${table(['College','Status','Campuses','Modules','Assessments',''],L.colleges.map(c=>[`<b>${esc(c.name)}</b><div class="sm muted">${esc(c.collegeId)}</div>`,stBadge(c.status),L.campuses.filter(x=>x.collegeId===c.collegeId).length,L.modules.filter(m=>(m.collegeIds||'').split(',').includes(c.collegeId)&&m.status!=='archived').length,L.assessments.filter(a=>a.collegeId===c.collegeId&&a.status!=='archived').length,`<a class="btn sm pri" href="#/college/${esc(c.collegeId)}">Manage</a>`]),'No colleges yet. College data is awaiting import. Use Add college to create the first entry.')}`;
+  ${table(['College','Status','Campuses','Modules','Assessments',''],L.colleges.map(c=>[`<b>${esc(c.name)}</b><div class="sm muted">${esc(c.collegeId)}</div>`,stBadge(c.status),L.campuses.filter(x=>x.collegeId===c.collegeId).length,L.modules.filter(m=>(m.collegeIds||'').split(',').includes(c.collegeId)&&m.status!=='archived').length,L.assessments.filter(a=>a.collegeId===c.collegeId&&a.status!=='archived').length,`<div class="acts"><a class="btn sm pri" href="#/college/${esc(c.collegeId)}">Manage</a><button class="btn sm danger" data-a="delitem" data-kind="colleges" data-id="${esc(c.collegeId)}" data-n="${esc(c.name)}">Delete</button></div>`]),'No colleges yet. College data is awaiting import. Use Add college to create the first entry.')}`;
 }
 ACT.addcol=()=>formModal({title:'Add college',fields:COLLEGE_F(),values:{completionRule:'{}'},wide:true,onSave:async(v,c)=>{const r=await adminSave('colleges',v);c.close();toast('College saved as draft');location.hash='#/college/'+r.id}});
 async function vCollegeAdmin(id){
-  await loadL(true);const c=L.colleges.find(x=>x.collegeId===id);if(!c)return '<div class="empty">College not found.</div>';
-  const [camp,crs,res]=[L.campuses.filter(x=>x.collegeId===id),L.courses.filter(x=>x.collegeId===id),await api('admin.list',{table:'resources',filter:{collegeId:id}})];
+  const [,res]=await Promise.all([loadL(),api('admin.list',{table:'resources',filter:{collegeId:id}})]);const c=L.colleges.find(x=>x.collegeId===id);if(!c)return '<div class="empty">College not found.</div>';
+  const [camp,crs]=[L.campuses.filter(x=>x.collegeId===id),L.courses.filter(x=>x.collegeId===id)];
   const mods=L.modules.filter(m=>(m.collegeIds||'').split(',').includes(id)&&m.status!=='archived'),unassigned=L.modules.filter(m=>!(m.collegeIds||'').split(',').includes(id)&&m.status!=='archived');
   const rule=(()=>{try{return JSON.parse(c.completionRule||'{}')}catch(e){return{}}})();
   return `<div class="page-h"><div><a class="sm" href="#/colleges">&larr; Colleges</a><h1>${esc(c.name)} ${stBadge(c.status)}</h1><p class="muted">ID ${esc(c.collegeId)}</p></div>
    <div class="acts"><button class="btn" data-a="prevcol" data-id="${esc(id)}">Preview employee view</button><button class="btn" data-a="editcol" data-id="${esc(id)}">Edit details</button>
-   ${c.status==='published'?`<button class="btn" data-a="cstat" data-id="${esc(id)}" data-s="draft">Unpublish</button>`:`<button class="btn pri" data-a="cstat" data-id="${esc(id)}" data-s="published">Publish</button>`}${c.status!=='archived'?`<button class="btn danger" data-a="carch" data-id="${esc(id)}">Archive</button>`:`<button class="btn" data-a="cstat" data-id="${esc(id)}" data-s="draft">Restore</button>`}</div></div>
+   ${c.status==='published'?`<button class="btn" data-a="cstat" data-id="${esc(id)}" data-s="draft">Unpublish</button>`:`<button class="btn pri" data-a="cstat" data-id="${esc(id)}" data-s="published">Publish</button>`}${c.status!=='archived'?`<button class="btn danger" data-a="carch" data-id="${esc(id)}">Archive</button>`:`<button class="btn" data-a="cstat" data-id="${esc(id)}" data-s="draft">Restore</button>`}<button class="btn danger" data-a="delitem" data-kind="colleges" data-id="${esc(id)}" data-n="${esc(c.name)}">Delete</button></div></div>
   <div class="stack"><div class="card"><h2>Details</h2><p style="white-space:pre-wrap">${esc(c.description)||'<span class="muted">No description.</span>'}</p>${c.admissionInfo?`<h3>Admission procedures</h3><p style="white-space:pre-wrap">${esc(c.admissionInfo)}</p>`:''}${c.eligibility?`<h3>Eligibility</h3><p style="white-space:pre-wrap">${esc(c.eligibility)}</p>`:''}
     <p class="sm muted">Completion needs: ${[rule.requireAllMandatory!==false&&'all mandatory lessons',rule.requireAssessments!==false&&'required assessments',rule.requirePassing!==false&&'passing scores'].filter(Boolean).join(', ')||'nothing (completes immediately)'}.</p></div>
   <div class="card"><div class="row" style="justify-content:space-between"><h2>Campuses</h2><button class="btn sm pri" data-a="addsub" data-t="campuses" data-c="${esc(id)}">Add campus</button></div>${table(['Campus','Location','Restrictions','Status',''],camp.map(x=>[esc(x.name),esc(x.location),esc(x.restrictions),stBadge(x.status),`<div class="acts"><button class="btn sm" data-a="editsub" data-t="campuses" data-id="${esc(x.campusId)}">Edit</button><button class="btn sm danger" data-a="delsub" data-t="campuses" data-id="${esc(x.campusId)}">Delete</button></div>`]),'No campuses yet.')}</div>
@@ -540,21 +549,19 @@ ACT.addres=el=>{const sc={collegeId:el.dataset.c||'',moduleId:el.dataset.m||'',l
 
 /* --- modules --- */
 async function vModules(){
-  await loadL(true);
-  const ls=await api('admin.list',{table:'lessons'});
+  const [,ls]=await Promise.all([loadL(),api('admin.list',{table:'lessons'})]);
   return `<div class="page-h"><div><h1>Training modules</h1><p class="muted">Modules load into the employee view from this list once published. Nothing is hard-coded.</p></div><button class="btn pri" data-a="addmod">Add module</button></div>
-  ${table(['Order','Module','Colleges','Lessons','Status',''],L.modules.slice().sort((a,b)=>a.order-b.order).map(m=>[esc(m.order),`<b>${esc(m.name)}</b>`,esc((m.collegeIds||'').split(',').filter(Boolean).map(id=>nameOf(L.colleges,'collegeId',id)).join(', ')||'Not assigned'),ls.filter(l=>l.moduleId===m.moduleId).length,stBadge(m.status),`<div class="acts"><a class="btn sm pri" href="#/module/${esc(m.moduleId)}">Edit</a><button class="btn sm danger" data-a="archmod" data-id="${esc(m.moduleId)}">Archive</button></div>`]),'No modules yet. Add the first module to begin. The eight training modules from your master document are awaiting import.')}`;
+  ${table(['Order','Module','Colleges','Lessons','Status',''],L.modules.slice().sort((a,b)=>a.order-b.order).map(m=>[esc(m.order),`<b>${esc(m.name)}</b>`,esc((m.collegeIds||'').split(',').filter(Boolean).map(id=>nameOf(L.colleges,'collegeId',id)).join(', ')||'Not assigned'),ls.filter(l=>l.moduleId===m.moduleId).length,stBadge(m.status),`<div class="acts"><a class="btn sm pri" href="#/module/${esc(m.moduleId)}">Edit</a><button class="btn sm danger" data-a="archmod" data-id="${esc(m.moduleId)}">Archive</button><button class="btn sm danger" data-a="delitem" data-kind="modules" data-id="${esc(m.moduleId)}" data-n="${esc(m.name)}">Delete</button></div>`]),'No modules yet. Add the first module to begin. The eight training modules from your master document are awaiting import.')}`;
 }
 const MOD_F=()=>[{k:'name',l:'Module name',req:true},{k:'order',l:'Order',t:'number',min:0},{k:'description',l:'Description',t:'textarea'},{k:'collegeIds',l:'Assigned colleges',t:'multi',o:opt(L.colleges.filter(c=>c.status!=='archived'),'collegeId','name')},{k:'campusIds',l:'Limit to campuses (optional)',t:'multi',o:L.campuses.map(c=>({v:c.campusId,l:nameOf(L.colleges,'collegeId',c.collegeId)+': '+c.name}))},{k:'courseIds',l:'Limit to courses (optional)',t:'multi',o:L.courses.map(c=>({v:c.courseId,l:nameOf(L.colleges,'collegeId',c.collegeId)+': '+c.name}))}];
 ACT.addmod=()=>formModal({title:'Add module',fields:MOD_F(),values:{order:L.modules.length+1},wide:true,onSave:async(v,c)=>{const r=await adminSave('modules',v);c.close();toast('Module saved as draft. Add lessons, then publish.');location.hash='#/module/'+r.id}});
 ACT.archmod=async el=>{if(!await confirmDlg('Archive this module? Employee results are kept.','Archive',true))return;await api('admin.remove',{table:'modules',id:el.dataset.id});L=null;toast('Archived');route()};
 const LESSON_F=()=>[{k:'title',l:'Lesson title',req:true},{k:'order',l:'Order',t:'number',min:0},{k:'content',l:'Lesson text and step-by-step instructions',t:'textarea',rows:8},{k:'imageUrl',l:'Image URL (optional)',t:'url'},{k:'videoUrl',l:'Video link: YouTube, Vimeo or Google Drive (optional)',t:'url'},{k:'mandatory',l:'Mandatory for completion',t:'bool'},{k:'status',l:'Status',t:'select',o:[{v:'draft',l:'Draft'},{v:'published',l:'Published'}]}];
 async function vModuleAdmin(id){
-  await loadL(true);const m=L.modules.find(x=>x.moduleId===id);if(!m)return '<div class="empty">Module not found.</div>';
-  const [ls,res]=await Promise.all([api('admin.list',{table:'lessons',filter:{moduleId:id}}),api('admin.list',{table:'resources',filter:{moduleId:id}})]);window.__lessons=ls;
+  const [,ls,res]=await Promise.all([loadL(),api('admin.list',{table:'lessons',filter:{moduleId:id}}),api('admin.list',{table:'resources',filter:{moduleId:id}})]);window.__lessons=ls;const m=L.modules.find(x=>x.moduleId===id);if(!m)return '<div class="empty">Module not found.</div>';
   const asm=L.assessments.filter(a=>a.moduleId===id&&a.status!=='archived');
   return `<div class="page-h"><div><a class="sm" href="#/modules">&larr; Modules</a><h1>${esc(m.name)} ${stBadge(m.status)}</h1><p class="muted">Assigned to: ${esc((m.collegeIds||'').split(',').filter(Boolean).map(i=>nameOf(L.colleges,'collegeId',i)).join(', ')||'no college yet')}</p></div>
-   <div class="acts"><button class="btn" data-a="prevmod" data-id="${esc(id)}">Preview</button><button class="btn" data-a="editmod" data-id="${esc(id)}">Edit details</button>${m.status==='published'?`<button class="btn" data-a="mstat" data-id="${esc(id)}" data-s="draft">Unpublish</button>`:`<button class="btn pri" data-a="mstat" data-id="${esc(id)}" data-s="published">Publish</button>`}</div></div>
+   <div class="acts"><button class="btn" data-a="prevmod" data-id="${esc(id)}">Preview</button><button class="btn" data-a="editmod" data-id="${esc(id)}">Edit details</button>${m.status==='published'?`<button class="btn" data-a="mstat" data-id="${esc(id)}" data-s="draft">Unpublish</button>`:`<button class="btn pri" data-a="mstat" data-id="${esc(id)}" data-s="published">Publish</button>`}<button class="btn danger" data-a="delitem" data-kind="modules" data-id="${esc(id)}" data-n="${esc(m.name)}">Delete</button></div></div>
   <div class="stack"><div class="card"><div class="row" style="justify-content:space-between"><h2>Lessons</h2><button class="btn sm pri" data-a="addles" data-id="${esc(id)}">Add lesson</button></div>
   ${table(['Order','Lesson','Required','Status',''],ls.map(l=>[esc(l.order),`<b>${esc(l.title)}</b><div class="sm muted">${esc((l.content||'').slice(0,90))}</div>`,bool(l.mandatory)?'Mandatory':'Optional',stBadge(l.status),`<div class="acts"><button class="btn sm" data-a="editles" data-id="${esc(l.lessonId)}">Edit</button><button class="btn sm danger" data-a="delles" data-id="${esc(l.lessonId)}">Delete</button></div>`]),'No lessons yet.')}</div>
   <div class="card"><div class="row" style="justify-content:space-between"><h2>Documents, images and video links</h2><button class="btn sm pri" data-a="addres" data-m="${esc(id)}">Add resource</button></div>${resTable(res)}</div>
@@ -571,18 +578,23 @@ ACT.prevmod=async el=>{const m=L.modules.find(x=>x.moduleId===el.dataset.id),cid
 /* --- question bank --- */
 const QS={f:{},q:'',off:0};
 async function vQuestions(){
-  await loadL(true);const r=await api('admin.questions',{filter:QS.f,q:QS.q,offset:QS.off,limit:50});window.__qs=r.rows;
-  const pg=`<div class="row" style="justify-content:space-between;margin-top:10px"><span class="sm muted">${r.total?`${QS.off+1}-${Math.min(QS.off+50,r.total)} of ${r.total}`:'0 results'}</span><div class="acts"><button class="btn sm" data-a="qpage" data-d="-1" ${QS.off<=0?'disabled':''}>Previous</button><button class="btn sm" data-a="qpage" data-d="1" ${QS.off+50>=r.total?'disabled':''}>Next</button></div></div>`;
+  const [,r]=await Promise.all([loadL(),api('admin.questions',{filter:QS.f,q:QS.q,offset:QS.off,limit:50})]);window.__qs=r.rows;
+  const pg=`<div class="row" style="justify-content:space-between;margin-top:10px"><div class="acts"><button class="btn sm" data-a="selall">Select all on page</button><button class="btn sm danger" data-a="delsel">Delete selected</button></div><span class="sm muted">${r.total?`${QS.off+1}-${Math.min(QS.off+50,r.total)} of ${r.total}`:'0 results'}</span><div class="acts"><button class="btn sm" data-a="qpage" data-d="-1" ${QS.off<=0?'disabled':''}>Previous</button><button class="btn sm" data-a="qpage" data-d="1" ${QS.off+50>=r.total?'disabled':''}>Next</button></div></div>`;
   return `<div class="page-h"><div><h1>Question bank</h1><p class="muted"><b>${r.activeCount.toLocaleString()}</b> active of ${r.target.toLocaleString()} target. ${Math.max(0,r.target-r.activeCount).toLocaleString()} remaining.</p></div><div class="acts"><a class="btn" href="#/import">Import from file</a><button class="btn pri" data-a="addq">Add question</button></div></div>
   <div class="card" style="margin-bottom:12px"><form class="fgrid" id="qf" onsubmit="return false"><div class="field"><label>Search</label><input type="text" name="q" value="${esc(QS.q)}" placeholder="Question text, topic or ID"></div>
    <div class="field"><label>College</label>${sel('collegeId',opt(L.colleges,'collegeId','name'),QS.f.collegeId,'All')}</div><div class="field"><label>Module</label>${sel('moduleId',opt(L.modules,'moduleId','name'),QS.f.moduleId,'All')}</div>
    <div class="field"><label>Type</label>${sel('type',[['single','Single choice'],['multi','Multiple choice'],['tf','True / false'],['short','Short answer']].map(x=>({v:x[0],l:x[1]})),QS.f.type,'All')}</div><div class="field"><label>Status</label>${sel('status',['active','inactive','archived'].map(x=>({v:x,l:x})),QS.f.status,'All')}</div>
    <div class="field" style="align-self:end"><button class="btn dark" data-a="qfilter">Apply filters</button></div></form></div>
-  ${table(['Question','College / module','Type','Marks','Status',''],r.rows.map(q=>[`<b>${esc(q.text.slice(0,110))}</b><div class="sm muted">${esc(q.questionId)}${q.topic?', '+esc(q.topic):''}</div>`,`${esc(nameOf(L.colleges,'collegeId',q.collegeId))}<div class="sm muted">${esc(nameOf(L.modules,'moduleId',q.moduleId))}</div>`,esc({single:'Single',multi:'Multiple',tf:'True/false',short:'Short'}[q.type]||q.type),esc(q.marks),stBadge(q.status),
-   `<div class="acts"><button class="btn sm" data-a="prevq" data-id="${esc(q.questionId)}">Preview</button><button class="btn sm" data-a="editq" data-id="${esc(q.questionId)}">Edit</button><button class="btn sm" data-a="dupq" data-id="${esc(q.questionId)}">Duplicate</button>${q.status!=='archived'?`<button class="btn sm danger" data-a="archq" data-id="${esc(q.questionId)}">Archive</button>`:''}</div>`]),'No questions match. Add one or import from a spreadsheet.')}${pg}`;
+  ${table(['','Question','College / module','Type','Marks','Status',''],r.rows.map(q=>[`<input type="checkbox" class="qsel" value="${esc(q.questionId)}" aria-label="Select question">`,`<b>${esc(q.text.slice(0,110))}</b><div class="sm muted">${esc(q.questionId)}${q.topic?', '+esc(q.topic):''}</div>`,`${esc(nameOf(L.colleges,'collegeId',q.collegeId))}<div class="sm muted">${esc(nameOf(L.modules,'moduleId',q.moduleId))}</div>`,esc({single:'Single',multi:'Multiple',tf:'True/false',short:'Short'}[q.type]||q.type),esc(q.marks),stBadge(q.status),
+   `<div class="acts"><button class="btn sm" data-a="prevq" data-id="${esc(q.questionId)}">Preview</button><button class="btn sm" data-a="editq" data-id="${esc(q.questionId)}">Edit</button><button class="btn sm" data-a="dupq" data-id="${esc(q.questionId)}">Duplicate</button>${q.status!=='archived'?`<button class="btn sm" data-a="archq" data-id="${esc(q.questionId)}">Archive</button>`:''}<button class="btn sm danger" data-a="delitem" data-kind="questions" data-id="${esc(q.questionId)}" data-n="this question">Delete</button></div>`]),'No questions match. Add one or import from a spreadsheet.')}${pg}`;
 }
 ACT.qfilter=()=>{const v=Object.fromEntries(new FormData($('#qf')));QS.q=v.q;delete v.q;QS.f=Object.fromEntries(Object.entries(v).filter(e=>e[1]));QS.off=0;route()};
 ACT.qpage=el=>{QS.off=Math.max(0,QS.off+50*Number(el.dataset.d));route()};
+const DELMSG={colleges:n=>`Permanently delete "${n}"? This also deletes its campuses, courses, documents, questions and assessments. Modules stay but are unlinked. Colleges with employee history cannot be deleted; archive those instead.`,modules:n=>`Permanently delete module "${n}" with its lessons, documents, questions and assessments? Modules with employee progress cannot be deleted; archive those instead.`,assessments:n=>`Permanently delete assessment "${n}"? Assessments with employee attempts cannot be deleted; archive those instead.`,questions:n=>`Permanently delete ${n}? Past results are not affected.`};
+ACT.delitem=async el=>{const k=el.dataset.kind;if(!await confirmDlg(DELMSG[k](el.dataset.n),'Delete permanently',true))return;await api('admin.delete',{kind:k,id:el.dataset.id});toast('Deleted');
+  const h=location.hash;if(k==='colleges'&&h.includes('/college/'))location.hash='#/colleges';else if(k==='modules'&&h.includes('/module/'))location.hash='#/modules';else route()};
+ACT.selall=()=>{const b=$$('.qsel'),all=b.every(x=>x.checked);b.forEach(x=>x.checked=!all)};
+ACT.delsel=async()=>{const ids=$$('.qsel:checked').map(x=>x.value);if(!ids.length)return toast('Tick the questions to delete first.','err');if(!await confirmDlg(`Permanently delete ${ids.length} question(s)? Past results are not affected.`,'Delete permanently',true))return;const r=await api('admin.delete',{kind:'questions',ids});toast(r.count+' deleted');route()};
 ACT.archq=async el=>{if(!await confirmDlg('Archive this question? Past attempts and scores are not affected.','Archive',true))return;const g=await api('admin.getQuestion',{questionId:el.dataset.id});g.question.status='archived';await api('admin.saveQuestion',{question:g.question,options:g.options});toast('Archived');route()};
 ACT.dupq=async el=>{await api('admin.duplicateQuestion',{questionId:el.dataset.id});toast('Duplicated as an inactive draft copy');route()};
 ACT.prevq=async el=>{const g=await api('admin.getQuestion',{questionId:el.dataset.id}),q=g.question;
@@ -627,7 +639,7 @@ function questionForm(g){
 const TEMPLATE_COLS=['questionId','collegeId','campusId','courseId','moduleId','topic','type','text','optionA','optionB','optionC','optionD','optionE','optionF','correct','explanation','marks','difficulty','required','status','assessmentId'];
 let IMP=null;
 async function vImport(){
-  await loadL(true);const [logs,st]=await Promise.all([api('admin.imports'),api('admin.stats')]);IMP=null;
+  await loadL();const [logs,st]=await Promise.all([api('admin.imports'),api('admin.stats')]);IMP=null;
   return `<div class="page-h"><div><h1>Import questions</h1><p class="muted">Upload a CSV or Excel file. You review every row before anything is saved. Invalid rows are never skipped silently.</p></div><button class="btn" data-a="tmpl">Download sample template</button></div>
   <div class="card"><p><b>${st.activeQuestions.toLocaleString()}</b> active questions now. Target ${st.questionTarget.toLocaleString()}, <b>${st.questionsRemaining.toLocaleString()}</b> remaining.</p>
    <div class="field"><label>File (.csv, .xlsx, .xls)</label><input type="file" id="impfile" accept=".csv,.xlsx,.xls"></div>
@@ -659,10 +671,10 @@ const ASM_F=()=>[{k:'name',l:'Assessment name',req:true},{k:'collegeId',l:'Colle
   {k:'mode',l:'Question selection',t:'select',o:[{v:'fixed',l:'Specific questions I choose'},{v:'random',l:'Draw randomly from the question bank'}]},{k:'drawCount',l:'Questions to draw (random mode)',t:'number',min:0},{k:'passPercent',l:'Passing percentage',t:'number',min:1,req:true},{k:'timeLimitMin',l:'Time limit in minutes (0 = none)',t:'number',min:0},{k:'maxAttempts',l:'Maximum attempts (0 = unlimited)',t:'number',min:0},
   {k:'shuffleQuestions',l:'Randomise question order',t:'bool'},{k:'shuffleOptions',l:'Randomise answer options',t:'bool'},{k:'revealAnswers',l:'Show correct answers after submission',t:'bool'},{k:'revealExplanations',l:'Show explanations after submission',t:'bool'},{k:'required',l:'Required for college completion',t:'bool'}];
 async function vAssessments(){
-  await loadL(true);
+  await loadL();
   return `<div class="page-h"><div><h1>Assessments</h1><p class="muted">Scoring happens on the server. Answer keys never reach the employee's browser.</p></div><button class="btn pri" data-a="addasm">Add assessment</button></div>
   ${table(['Assessment','College / module','Pass mark','Limits','Status',''],L.assessments.map(a=>[`<b>${esc(a.name)}</b><div class="sm muted">${a.mode==='random'?'Random, '+esc(a.drawCount)+' questions':'Fixed set, '+esc(a.totalMarks||0)+' marks'}${bool(a.required)?', required':''}</div>`,`${esc(nameOf(L.colleges,'collegeId',a.collegeId))}<div class="sm muted">${esc(a.moduleId?nameOf(L.modules,'moduleId',a.moduleId):'Whole college')}</div>`,esc(a.passPercent)+'%',`${a.timeLimitMin&&a.timeLimitMin!=='0'?esc(a.timeLimitMin)+' min':'No time limit'}, ${a.maxAttempts&&a.maxAttempts!=='0'?esc(a.maxAttempts)+' attempts':'unlimited attempts'}`,stBadge(a.status),
-   `<div class="acts">${a.mode!=='random'?`<button class="btn sm" data-a="asmq" data-id="${esc(a.assessmentId)}">Questions</button>`:''}<button class="btn sm" data-a="editasm" data-id="${esc(a.assessmentId)}">Edit</button>${a.status==='published'?`<button class="btn sm" data-a="astat" data-id="${esc(a.assessmentId)}" data-s="draft">Unpublish</button>`:`<button class="btn sm pri" data-a="astat" data-id="${esc(a.assessmentId)}" data-s="published">Publish</button>`}<button class="btn sm danger" data-a="archasm" data-id="${esc(a.assessmentId)}">Archive</button></div>`]),'No assessments yet.')}`;
+   `<div class="acts">${a.mode!=='random'?`<button class="btn sm" data-a="asmq" data-id="${esc(a.assessmentId)}">Questions</button>`:''}<button class="btn sm" data-a="editasm" data-id="${esc(a.assessmentId)}">Edit</button>${a.status==='published'?`<button class="btn sm" data-a="astat" data-id="${esc(a.assessmentId)}" data-s="draft">Unpublish</button>`:`<button class="btn sm pri" data-a="astat" data-id="${esc(a.assessmentId)}" data-s="published">Publish</button>`}<button class="btn sm danger" data-a="archasm" data-id="${esc(a.assessmentId)}">Archive</button><button class="btn sm danger" data-a="delitem" data-kind="assessments" data-id="${esc(a.assessmentId)}" data-n="${esc(a.name)}">Delete</button></div>`]),'No assessments yet.')}`;
 }
 ACT.addasm=()=>formModal({title:'Add assessment',fields:ASM_F(),values:{mode:'fixed',passPercent:70,maxAttempts:3,timeLimitMin:0,shuffleQuestions:true,shuffleOptions:true,required:true},wide:true,onSave:async(v,c)=>{await adminSave('assessments',v);c.close();toast('Assessment saved as draft. Choose its questions, then publish.');route()}});
 ACT.editasm=el=>{const a=L.assessments.find(x=>x.assessmentId===el.dataset.id);formModal({title:'Edit assessment',fields:ASM_F(),values:a,wide:true,onSave:async(v,c)=>{v.assessmentId=a.assessmentId;await adminSave('assessments',v);c.close();toast('Saved');route()}})};
@@ -698,7 +710,7 @@ FORM.settings=async f=>{const d=Object.fromEntries(new FormData(f));d.allowRegis
 
 /* ---------- boot ---------- */
 (async function boot(){
-  try{S.info=Object.assign(S.info,await api('publicInfo'))}catch(e){}
+  try{S.info=Object.assign(S.info,await api('publicInfo'));S.infoLoaded=true}catch(e){}
   if(S.token){try{S.user=await api('me')}catch(e){setToken('')}}
   document.title=S.info.portalName;route();
 })();
