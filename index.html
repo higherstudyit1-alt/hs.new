@@ -170,7 +170,9 @@ async function api(action,data){
       let res; try{res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:S.token,data:data||{}})})}
       catch(e){throw new Error('Cannot reach the server. Check your connection and the apiUrl setting.')}
       const txt=await res.text();let j=null;try{j=JSON.parse(txt)}catch(e){}
-      if(!j){ if(attempt===0){await new Promise(r=>setTimeout(r,900));continue} throw new Error('Google returned an error page instead of data. Open Apps Script > Executions to see the failure, and make sure the latest Code.gs is deployed as a new version.') }
+      if(!j){ const safe=/^(publicInfo|me|login|getResource|emp\.(dashboard|college|attempts)|mgr\.|rep\.|admin\.(lookups|list|stats|users|questions|getQuestion|assessmentQuestions|imports|preview|audit|getSettings|importPreview|bulkPreview))$/.test(action);
+        if(attempt===0&&safe){await new Promise(r=>setTimeout(r,900));continue}
+        throw new Error(safe?'Google returned an error page instead of data. Open Apps Script > Executions to see the failure, and make sure the latest Code.gs is deployed as a new version.':'The server did not give a clear answer, so this action may or may not have been saved. Refresh the page and check before trying again.') }
       if(!j.ok){ if(j.code==='auth'&&S.token) signOut(true); const e=new Error(j.error||'Request failed');e.code=j.code;throw e }
       if(/^(admin\.(save|setStatus|remove|delete|saveQuestion|duplicateQuestion|setAssessmentQuestions|importCommit|bulkCommit|userAction|assignManager|uploadResource|overrideLock|saveSettings))$/.test(action))L=null;
       return j.data;
@@ -464,12 +466,12 @@ async function vUsers(){
   const pend=us.filter(u=>u.status==='pending');
   const acts=u=>{
     const a=[];
-    if(u.status==='pending'){a.push(`<button class="btn sm pri" data-a="uapprove" data-id="${esc(u.userId)}">Review</button>`,`<button class="btn sm danger" data-a="uop" data-op="reject" data-id="${esc(u.userId)}">Reject</button>`)}
+    if(u.status==='pending'){a.push(`<button class="btn sm pri" data-a="uapprove" data-id="${esc(u.userId)}">Review</button>`,`<button class="btn sm danger" data-a="uop" data-op="reject" data-id="${esc(u.userId)}">Reject</button>`,`<button class="btn sm danger" data-a="udel" data-id="${esc(u.userId)}">Delete</button>`)}
     else if(u.isPrimary){a.push('<span class="muted sm">Primary admin</span>')}
     else{
       if(u.status==='active'&&u.role==='employee')a.push(`<button class="btn sm" data-a="umgr" data-id="${esc(u.userId)}">Manager</button>`,`<button class="btn sm" data-a="uaccess" data-id="${esc(u.userId)}">Extra access</button>`,`<button class="btn sm" data-a="ulock" data-id="${esc(u.userId)}">Release lock</button>`);
       if(u.status==='active')a.push(`<button class="btn sm" data-a="urole" data-id="${esc(u.userId)}">Role</button>`);
-      if(u.userId!==S.user.userId)a.push(u.status==='active'?`<button class="btn sm danger" data-a="uop" data-op="disable" data-id="${esc(u.userId)}">Disable</button>`:`<button class="btn sm" data-a="uop" data-op="enable" data-id="${esc(u.userId)}">Enable</button>`);
+      if(u.userId!==S.user.userId)a.push(u.status==='active'?`<button class="btn sm danger" data-a="uop" data-op="disable" data-id="${esc(u.userId)}">Disable</button>`:`<button class="btn sm" data-a="uop" data-op="enable" data-id="${esc(u.userId)}">Enable</button>`,`<button class="btn sm danger" data-a="udel" data-id="${esc(u.userId)}">Delete</button>`);
     }
     return `<div class="acts">${a.join('')}</div>`};
   const row=u=>[`<b>${esc(u.fullName)}</b><div class="sm muted">${esc(u.email)}${u.employeeId?'<br>ID '+esc(u.employeeId):''}</div>`,esc(u.jobTitle),`${esc(u.role)}${u.status==='pending'&&u.requestedRole==='manager'?'<br>'+badge('Requested manager','warn'):''}`,stBadge(u.status),esc(u.role==='employee'?nameOf(us,'userId',u.managerId,'fullName'):'—'),acts(u)];
@@ -478,6 +480,7 @@ async function vUsers(){
 }
 const uById=id=>L.users.find(u=>u.userId===id);
 ACT.uop=async el=>{const u=uById(el.dataset.id),op=el.dataset.op;if(!await confirmDlg(`${op[0].toUpperCase()+op.slice(1)} ${u.fullName}?`,op[0].toUpperCase()+op.slice(1),op!=='enable'))return;await api('admin.userAction',{userId:u.userId,op});toast('Done');route()};
+ACT.udel=async el=>{const u=uById(el.dataset.id);if(!await confirmDlg(`Permanently delete ${u.fullName} (${u.email})? Their email and employee ID become free to register again. Users who already have training progress or results cannot be deleted; disable them instead.`,'Delete user',true))return;await api('admin.userAction',{userId:u.userId,op:'delete'});toast('User deleted');route()};
 ACT.uapprove=el=>{const u=uById(el.dataset.id),mg=L.users.filter(x=>x.role==='manager'&&x.status==='active');
   const roles=[{v:'employee',l:'Employee / Counsellor'},{v:'manager',l:'Manager'}].concat(S.user.isPrimary?[{v:'admin',l:'Admin'}]:[]);
   formModal({title:'Approve '+u.fullName,label:'Approve account',values:{role:u.requestedRole,managerId:u.managerId},fields:[{k:'role',l:'Role',t:'select',o:roles},{k:'managerId',l:'Manager (for employees)',t:'select',o:opt(mg,'userId','fullName'),blank:'Select a manager'}],
