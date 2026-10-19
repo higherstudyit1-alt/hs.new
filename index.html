@@ -6,7 +6,9 @@
 <title>Higher.Study Training Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#1B2230">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <!-- ============================================================
      ONE LINE TO EDIT: paste your deployed Apps Script Web App URL.
      It ends with /exec. See SETUP.md, step 5.
@@ -124,6 +126,77 @@ details.mod>summary::-webkit-details-marker{display:none}
 .toast{background:var(--ink);color:#fff;padding:11px 16px;border-radius:9px;max-width:360px;font-weight:500}.toast.err{background:var(--bad)}
 .optrow{display:flex;gap:8px;margin-bottom:8px;align-items:center}.optrow input[type=text]{flex:1}.optrow input[type=radio],.optrow input[type=checkbox]{width:auto}
 .errlist{max-height:240px;overflow:auto;font-size:.85rem}
+
+/* ===== motion + polish (transform/opacity only, so it stays cheap) ===== */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes shimmer{100%{transform:translateX(100%)}}
+@keyframes pop{0%{transform:scale(.55);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(242,106,27,.55)}100%{box-shadow:0 0 0 12px rgba(242,106,27,0)}}
+@keyframes floaty{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(0,-22px,0)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes ringin{from{stroke-dashoffset:var(--c)}}
+@keyframes fall{0%{transform:translate3d(0,-20px,0) rotate(0);opacity:1}100%{transform:translate3d(var(--x),420px,0) rotate(var(--r));opacity:0}}
+@keyframes slidein{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+body{background:radial-gradient(900px 420px at 100% -8%,#FFE9DA 0%,transparent 60%),var(--bg)}
+#main>*{animation:rise .5s cubic-bezier(.2,.7,.2,1) backwards}
+#main>*:nth-child(2){animation-delay:.05s}#main>*:nth-child(3){animation-delay:.1s}#main>*:nth-child(4){animation-delay:.15s}#main>*:nth-child(5){animation-delay:.2s}
+.grid>*,.stats>*{animation:rise .55s cubic-bezier(.2,.7,.2,1) backwards}
+.grid>*:nth-child(2),.stats>*:nth-child(2){animation-delay:.06s}.grid>*:nth-child(3),.stats>*:nth-child(3){animation-delay:.12s}.grid>*:nth-child(4),.stats>*:nth-child(4){animation-delay:.18s}.grid>*:nth-child(5),.stats>*:nth-child(5){animation-delay:.24s}.grid>*:nth-child(n+6){animation-delay:.3s}
+.bar i{transform-origin:left;animation:grow .9s cubic-bezier(.2,.7,.2,1) backwards}
+.brand::before{content:'H';display:inline-grid;place-items:center;width:30px;height:30px;margin-right:9px;border-radius:9px;background:linear-gradient(135deg,#F57A2E,#C94F0B);color:#fff;font-size:.95rem;vertical-align:middle}
+.nav a{transition:background .15s,color .15s,padding-left .15s}.nav a:hover{padding-left:16px}
+.btn{transition:transform .12s,box-shadow .15s,border-color .15s,background .15s}.btn:active{transform:scale(.97)}
+.btn.pri{background:linear-gradient(180deg,#F57A2E,#F26A1B);box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 4px 10px rgba(242,106,27,.28)}
+.btn.pri:hover{background:linear-gradient(180deg,#F26A1B,#C94F0B)}
+tbody tr:hover td{background:#FFF9F5}
+.lift,.college:not(.st-locked){transition:transform .2s,box-shadow .2s,border-color .2s}
+.lift:hover,.college:not(.st-locked):hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(27,34,48,.10);border-color:#F7CBAE}
+a.stat{display:block;color:inherit;text-decoration:none}
+.stat{position:relative}.stat b{font-variant-numeric:tabular-nums}
+.stat .si{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--orange-t);color:var(--orange-d)}
+.ico{width:18px;height:18px;flex:none}
+.active-panel{background:linear-gradient(120deg,#1B2230,#2A3345 62%,#3b2c25);position:relative;overflow:hidden}
+.active-panel::after{content:'';position:absolute;right:-60px;top:-70px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(242,106,27,.45),transparent 65%);animation:floaty 8s ease-in-out infinite;pointer-events:none}
+.active-panel>*{position:relative;z-index:1}
+.active-panel.idle::after{display:none}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--orange);margin-right:7px;animation:pulse 1.6s infinite}
+.eyebrow{color:var(--orange-d);font-weight:700;font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;margin:0 0 4px}
+.hero-h .overall{display:grid;justify-items:center;gap:2px}
+.ring text{fill:var(--ink)}.ring .rg{animation:ringin 1.1s cubic-bezier(.2,.7,.2,1) backwards}
+.ci{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#EDF0F5;color:var(--muted);flex:none}.ci svg{width:17px;height:17px}.ci.ok{background:var(--ok-t);color:var(--ok)}.pop{animation:pop .5s backwards}
+.steps{list-style:none;margin:0;padding:0}.steps li{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)}.steps li:last-child{border-bottom:0}
+.tk{width:22px;height:22px;border-radius:50%;border:2px solid #C9D0DE;display:grid;place-items:center;flex:none;color:#fff}.tk svg{width:13px;height:13px;stroke-width:3}
+.steps .done .tk{background:var(--ok);border-color:var(--ok);animation:pop .45s backwards}.steps .done a{color:var(--muted)}
+.qcard{display:flex;gap:18px;align-items:center}
+.empty::before{content:'';display:block;width:54px;height:54px;margin:0 auto 10px;opacity:.85;animation:bob 3.5s ease-in-out infinite;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F26A1B' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='16' rx='3'/%3E%3Cpath d='M3 9h18M8 14h5'/%3E%3C/svg%3E") center/contain no-repeat}
+.ov{animation:fade .18s}.modal{animation:rise .25s cubic-bezier(.2,.7,.2,1)}.toast{animation:slidein .3s cubic-bezier(.2,.7,.2,1)}
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:90}.confetti i{position:absolute;top:0;width:9px;height:14px;border-radius:2px;animation:fall 1.8s ease-in forwards}
+#netbar{position:fixed;top:10px;left:50%;transform:translate(-50%,-90px);background:var(--ink);color:#fff;padding:8px 18px;border-radius:99px;font-size:.85rem;font-weight:600;z-index:150;transition:transform .3s;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#netbar.on{transform:translate(-50%,0)}
+.sk{position:relative;overflow:hidden;background:#E9ECF2;border-radius:10px}
+.sk::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-100%);animation:shimmer 1.3s infinite}
+.sk-h{height:30px;width:min(320px,70%);margin-bottom:10px}.sk-p{height:14px;width:min(460px,90%);margin-bottom:22px}
+.sk-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:20px}.sk-stat{height:84px}
+.sk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}.sk-card{height:210px}
+.sk-wrap>*{animation:none!important}
+/* sign-in screen */
+.auth2{min-height:100vh;display:grid;grid-template-columns:1.05fr 1fr}
+.hero{position:relative;overflow:hidden;background:linear-gradient(145deg,#1B2230 0%,#2A3345 58%,#3a2a22 100%);color:#fff;display:flex;align-items:center;padding:48px clamp(24px,5vw,72px)}
+.hero .blob{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(242,106,27,.9),rgba(242,106,27,0) 68%);animation:floaty 9s ease-in-out infinite}
+.hero .b1{width:380px;height:380px;right:-90px;top:-70px}.hero .b2{width:300px;height:300px;left:-80px;bottom:-60px;animation-delay:-3s;opacity:.7}.hero .b3{width:160px;height:160px;right:22%;bottom:14%;animation-delay:-6s;opacity:.5}
+.hero-in{position:relative;z-index:1;max-width:520px;animation:rise .7s cubic-bezier(.2,.7,.2,1) backwards}
+.hero .brand{padding:0 0 28px;font-size:1.4rem}
+.hero h2{font-size:clamp(1.8rem,3.2vw,2.6rem);line-height:1.12;margin-bottom:14px}
+.hero p{color:#C9D0DE;font-size:1.05rem}
+.hl{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:12px}.hl li{display:flex;gap:12px;align-items:center;color:#E7EBF3}
+.hl .ico{width:30px;height:30px;padding:6px;border-radius:9px;background:rgba(255,255,255,.1);color:#FFB37F}
+.hl li{animation:rise .6s cubic-bezier(.2,.7,.2,1) backwards}.hl li:nth-child(2){animation-delay:.12s}.hl li:nth-child(3){animation-delay:.24s}
+.auth-panel{display:grid;place-items:center;padding:24px}
+.auth-panel .card{width:min(440px,100%);padding:30px;animation:rise .6s cubic-bezier(.2,.7,.2,1) backwards;box-shadow:0 18px 50px rgba(27,34,48,.08)}
+@media (max-width:860px){.auth2{grid-template-columns:1fr}.hero{display:none}.qcard{flex-wrap:wrap}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 [hidden]{display:none!important}
 .fbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .fbar input[type=search]{width:min(260px,100%);padding:7px 10px;border:1px solid #C9D0DE;border-radius:8px}
@@ -144,8 +217,8 @@ details.mod>summary::-webkit-details-marker{display:none}
 <div class="busy-bar"></div>
 <div id="app"></div>
 <div id="modal-root"></div>
+<div id="netbar" role="status" aria-live="polite"></div>
 <div id="toasts" aria-live="polite"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (function(){
 'use strict';
@@ -165,28 +238,71 @@ const linkify=t=>esc(t).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_b
 const bar=(p,ok)=>`<div class="bar ${ok?'ok':''}" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(0,Math.min(100,p))}%"></i></div>`;
 const badge=(t,k)=>`<span class="badge ${k||''}">${esc(t)}</span>`;
 const stBadge=s=>badge(s,{published:'ok',active:'ok',completed:'ok',draft:'warn',pending:'warn','in progress':'org',archived:'',inactive:'',disabled:'bad',rejected:'bad',locked:''}[s]||'');
+
+const ICON={users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',building:'<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>',book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',clip:'<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/>',lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',check:'<polyline points="20 6 9 17 4 12"/>',clock:'<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>',flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/>'};
+const ico=(n,c)=>`<svg class="ico ${c||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]||''}</svg>`;
+const reduced=()=>!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function ring(p,size){size=size||88;const r=size/2-7,c=+(2*Math.PI*r).toFixed(1),m=size/2;return `<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${p}% complete"><circle cx="${m}" cy="${m}" r="${r}" fill="none" stroke="#E9ECF2" stroke-width="7"/><circle class="rg" cx="${m}" cy="${m}" r="${r}" fill="none" stroke="#F26A1B" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${(c*(1-Math.max(0,Math.min(100,p))/100)).toFixed(1)}" style="--c:${c}" transform="rotate(-90 ${m} ${m})"/><text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" font-family="var(--head)" font-weight="700" font-size="${Math.round(size*.26)}">${p}%</text></svg>`}
+function animateCounts(){
+  if(reduced()||!window.requestAnimationFrame)return;
+  $$('[data-count]').forEach(el=>{const to=Number(el.dataset.count),fin=el.textContent;if(!isFinite(to)||to<=0)return;const t0=performance.now();el.textContent='0';
+    const tick=n=>{const p=Math.min(1,(n-t0)/700);if(p>=1){el.textContent=fin;return}el.textContent=Math.round(to*(1-Math.pow(1-p,3))).toLocaleString();requestAnimationFrame(tick)};requestAnimationFrame(tick)});
+}
+function celebrate(){
+  if(reduced())return;const w=document.createElement('div');w.className='confetti';w.setAttribute('aria-hidden','true');const cols=['#F26A1B','#17835A','#1B2230','#FFB347','#4C9AFF'];
+  for(let i=0;i<28;i++){const p=document.createElement('i');p.style.cssText=`left:${(Math.random()*100).toFixed(1)}%;background:${cols[i%5]};--x:${(Math.random()*160-80)|0}px;--r:${(Math.random()*720-360)|0}deg;animation-delay:${(Math.random()*.4).toFixed(2)}s`;w.appendChild(p)}
+  document.body.appendChild(w);setTimeout(()=>w.remove(),2600);
+}
+const skel=()=>`<div class="sk-wrap" aria-busy="true" aria-label="Loading"><div class="sk sk-h"></div><div class="sk sk-p"></div><div class="sk-stats"><div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div></div><div class="sk-grid"><div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div></div></div>`;
+let xlsxP=null;
+function loadXlsx(){   // the spreadsheet reader is ~1 MB, so it only loads when someone opens Bulk import
+  if(window.XLSX)return Promise.resolve();
+  return xlsxP||(xlsxP=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';sc.onload=()=>ok();sc.onerror=()=>{xlsxP=null;no(new Error('The spreadsheet reader could not load. Check your internet connection and try again.'))};document.head.appendChild(sc)}));
+}
 function toast(m,k){const t=document.createElement('div');t.className='toast '+(k||'');t.textContent=m;$('#toasts').appendChild(t);setTimeout(()=>t.remove(),k==='err'?6000:3500)}
 function busy(){document.body.classList.toggle('busy',pending>0)}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const SAFE=/^(publicInfo|me|login|getResource|emp\.(dashboard|college|attempts)|mgr\.|rep\.|admin\.(lookups|list|stats|users|questions|getQuestion|assessmentQuestions|imports|preview|audit|getSettings|importPreview|bulkPreview))$/;
-async function api(action,data){
+const IDEMP=/^emp\.(submitAssessment|completeLesson|startCollege|startAssessment)$/;   // repeating these is harmless: the server returns the earlier result
+const TTL={'emp.dashboard':20000,'emp.college':20000,'emp.attempts':20000,'mgr.team':20000,'mgr.employee':20000,'rep.options':60000,'admin.lookups':30000,'admin.list':15000,'admin.stats':20000,'admin.users':15000,'admin.questions':10000,'admin.imports':20000,'admin.getSettings':30000,'admin.assessmentQuestions':10000,'admin.getQuestion':10000};
+const NETC=new Map(),INFL=new Map();let active=0;const waitQ=[];
+const slot=()=>new Promise(res=>{if(active<3){active++;res()}else waitQ.push(res)});      // at most 3 requests at once per tab
+const free=()=>{const n=waitQ.shift();if(n)n();else active--};
+function netMsg(t){const b=$('#netbar');if(!b)return;b.textContent=t||'';b.classList.toggle('on',!!t)}
+async function rawApi(action,data){
   if(!API) throw new Error('The backend is not connected yet. Set apiUrl at the top of index.html (see SETUP.md, step 5).');
-  pending++;busy();const safe=SAFE.test(action);
+  pending++;busy();const canRetry=SAFE.test(action)||IDEMP.test(action);
   try{
     for(let attempt=0;attempt<4;attempt++){
-      let res; try{res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:S.token,data:data||{}})})}
-      catch(e){ if(safe&&attempt<2){await sleep(700*(attempt+1));continue} throw new Error('Cannot reach the server. Check your connection and the apiUrl setting.') }
-      const txt=await res.text();let j=null;try{j=JSON.parse(txt)}catch(e){}
-      if(!j){ if(safe&&attempt<2){await sleep(800*(attempt+1)+Math.random()*400);continue}
-        throw new Error(safe?'Google returned an error page instead of data. It is usually a short overload: wait a few seconds and try again.':'The server did not give a clear answer, so this action may or may not have been saved. Refresh the page and check before trying again.') }
-      if(!j.ok&&j.code==='busy'&&attempt<3){await sleep(900*(attempt+1)+Math.random()*700);continue}   // the server did not run it, so retrying any action is safe
+      let txt=null;await slot();const ctl=new AbortController(),to=setTimeout(()=>ctl.abort(),canRetry?30000:45000);
+      try{const res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:S.token,data:data||{}}),signal:ctl.signal});txt=await res.text()}catch(e){txt=null}finally{clearTimeout(to);free()}
+      let j=null;if(txt!==null){try{j=JSON.parse(txt)}catch(e){}}
+      if(!j){
+        if(canRetry&&attempt<3){netMsg('Connection is slow. Retrying…');await sleep(700*(attempt+1)+Math.random()*500);continue}
+        netMsg(null);
+        throw new Error(txt===null?(canRetry?'Cannot reach the server. Check your connection and try again.':'The connection dropped, so this action may or may not have been saved. Refresh the page and check before trying again.')
+          :(canRetry?'Google returned an error page. It is usually a short overload: wait a few seconds and try again.':'The server did not give a clear answer, so this action may or may not have been saved. Refresh the page and check before trying again.'));
+      }
+      if(!j.ok&&j.code==='busy'&&attempt<3){netMsg('The server is busy. Retrying…');await sleep(900*(attempt+1)+Math.random()*700);continue}   // it did not run, so any action can be retried
+      netMsg(null);
       if(!j.ok){ if(j.code==='auth'&&S.token) signOut(true); const e=new Error(j.error||'Request failed');e.code=j.code;throw e }
-      if(/^(admin\.(save|setStatus|remove|delete|saveQuestion|duplicateQuestion|setAssessmentQuestions|importCommit|bulkCommit|publishAll|approveAllEmployees|userAction|assignManager|uploadResource|overrideLock|saveSettings))$/.test(action))L=null;
       return j.data;
     }
   } finally{pending--;busy()}
 }
-function setToken(t){S.token=t||'';t?localStorage.setItem('hs_token',t):localStorage.removeItem('hs_token')}
+/** Reads are cached for a few seconds and shared between simultaneous callers; any write clears the cache. */
+async function api(action,data){
+  const ttl=TTL[action];
+  if(!ttl){const v=await rawApi(action,data);
+    if(!SAFE.test(action)){NETC.clear();if(/^(admin\.(save|setStatus|remove|delete|saveQuestion|duplicateQuestion|setAssessmentQuestions|importCommit|bulkCommit|publishAll|approveAllEmployees|userAction|assignManager|uploadResource|overrideLock|saveSettings))$/.test(action))L=null}
+    return v}
+  const key=action+'|'+JSON.stringify(data||{}),hit=NETC.get(key);
+  if(hit&&Date.now()-hit.t<ttl)return JSON.parse(hit.v);
+  let p=INFL.get(key);
+  if(!p){p=rawApi(action,data).then(v=>{NETC.set(key,{t:Date.now(),v:JSON.stringify(v)});return v}).finally(()=>INFL.delete(key));INFL.set(key,p)}
+  return JSON.parse(JSON.stringify(await p));   // callers may edit what they get
+}
+function setToken(t){NETC.clear();S.token=t||'';t?localStorage.setItem('hs_token',t):localStorage.removeItem('hs_token')}
 function signOut(expired){ setToken('');S.user=null;L=null;location.hash='#/login';route(); if(expired)toast('Your session expired. Sign in again.','err') }
 function downloadCsv(name,cols,rows){
   const q=v=>{v=String(v==null?'':v); if(/^[=+\-@]/.test(v))v="'"+v; return '"'+v.replace(/"/g,'""')+'"'};
@@ -283,11 +399,11 @@ function route(){
   if(['/login','/register','/reset'].includes(path)){location.hash='#/';return}
   const u=S.user, app=$('#app');
   const nav=NAV[u.role].map(([p,l])=>`<a href="#${p}" class="${(p==='/'?path==='/':path===p||path.startsWith(p+'/')||(p==='/colleges'&&path.startsWith('/college/'))||(p==='/modules'&&path.startsWith('/module/')))?'on':''}">${esc(l)}</a>`).join('');
-  app.innerHTML=`<div class="app"><aside class="side"><div class="brand">Higher<b>.</b>Study</div><nav class="nav" aria-label="Main">${nav}</nav><div class="who"><strong>${esc(u.fullName)}</strong>${esc(u.role)}<br><button class="btn sm" data-a="signout">Sign out</button></div></aside><button class="btn menu-btn" data-a="menu" aria-label="Menu">Menu</button><main class="main" id="main"><p class="muted">Loading…</p></main></div>`;
+  app.innerHTML=`<div class="app"><aside class="side"><div class="brand">Higher<b>.</b>Study</div><nav class="nav" aria-label="Main">${nav}</nav><div class="who"><strong>${esc(u.fullName)}</strong>${esc(u.role)}<br><button class="btn sm" data-a="signout">Sign out</button></div></aside><button class="btn menu-btn" data-a="menu" aria-label="Menu">Menu</button><main class="main" id="main">${skel()}</main></div>`;
   let fn=null,args=[]; for(const [re,f] of R[u.role]){const m=path.match(re);if(m){fn=f;args=m.slice(1);break}}
   (async()=>{
     try{ const out=fn?await fn(...args):'<div class="empty">Page not found.</div>'; if(my!==rid)return;
-      const html=typeof out==='string'?out:out.html; $('#main').innerHTML=html; if(out&&out.after)out.after();
+      const html=typeof out==='string'?out:out.html; $('#main').innerHTML=html; if(out&&out.after)out.after(); animateCounts();
     }catch(e){ if(my===rid&&$('#main'))$('#main').innerHTML=`<div class="alert">${esc(e.message)}</div><button class="btn" data-a="reload">Try again</button>` }
   })();
 }
@@ -328,7 +444,7 @@ function authView(path){
     body=`<h1>${name}</h1><p class="muted">Sign in to continue your training.</p>${warn}<form data-form="login"><div class="field"><label for="em">Work email</label><input id="em" name="email" type="email" autocomplete="username" required></div>${pw}<button class="btn pri" type="submit" style="width:100%;justify-content:center">Sign in</button></form>
     <p style="margin-top:14px" class="sm"><a href="#/reset">Forgot password?</a>${info.allowRegistration?` &nbsp; <a href="#/register">Create an account</a>`:''}</p>`;
   }
-  app.innerHTML=`<div class="auth"><div class="card">${body}</div></div>`;
+  app.innerHTML=`<div class="auth2"><section class="hero" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><div class="hero-in"><div class="brand">Higher<b>.</b>Study</div><h2>Counsellor training,<br>one college at a time.</h2><p>Short lessons, clear admission rules and quick assessments. Your progress is saved as you go.</p><ul class="hl"><li>${ico('book')}Step-by-step lessons for every college</li><li>${ico('clip')}Assessments with instant results</li><li>${ico('check')}Progress saved automatically</li></ul></div></section><section class="auth-panel"><div class="card">${body}</div></section></div>`;
   const a=$('#acct'); if(a)a.onchange=()=>{const m=a.value==='manager';$('#mgrf').style.display=m?'none':'';$('[name=managerId]').required=!m};
 }
 const FORM={
@@ -375,18 +491,19 @@ ACT.runrep=runRep; ACT.exprep=async()=>{if(!lastRep)await runRep();downloadCsv(`
 async function vDash(){
   const d=await api('emp.dashboard');S.user=d.user;
   const c=d.colleges;
-  const panel=d.active?`<section class="active-panel"><div><small>Now training for</small><h2>${esc(d.active.name)}</h2>${bar(c.find(x=>x.collegeId===d.active.collegeId).percent)}<small>${c.find(x=>x.collegeId===d.active.collegeId).percent}% complete</small></div><a class="btn pri" href="#/college/${esc(d.active.collegeId)}">Continue training</a></section>`
+  const panel=d.active?`<section class="active-panel"><div><small><span class="dot"></span>Now training for</small><h2>${esc(d.active.name)}</h2>${bar(c.find(x=>x.collegeId===d.active.collegeId).percent)}<small>${c.find(x=>x.collegeId===d.active.collegeId).percent}% complete</small></div><a class="btn pri" href="#/college/${esc(d.active.collegeId)}">Continue training</a></section>`
    :c.length?`<section class="active-panel idle"><div><h2>Choose a college to begin</h2><p>You train for one college at a time. The others unlock when you complete the active one.</p></div></section>`:'';
   const cards=c.map(x=>{
     const ini=esc((x.name||'?').trim().charAt(0).toUpperCase());
     const foot=x.status==='locked'?`<div class="lock-note">${esc(x.lockedReason)}</div><button class="btn" disabled>Locked</button>`
       :x.status==='available'?(x.hasContent?`<button class="btn pri" data-a="startcol" data-id="${esc(x.collegeId)}" data-n="${esc(x.name)}">Start training</button>`:`<div class="lock-note">${x.moduleCount?'Lessons are not published for this college yet.':'Training modules are being set up.'} Check back soon.</div><button class="btn" disabled>Not ready yet</button>`)
       :`<a class="btn ${x.status==='active'?'pri':''}" href="#/college/${esc(x.collegeId)}">${x.status==='completed'?'Review training':'Open training'}</a>`;
-    return `<article class="card college st-${x.status}"><div class="top"><div class="row"><div class="logo">${/^https?:/.test(x.logoUrl||'')?`<img src="${esc(x.logoUrl)}" alt="">`:ini}</div><h3>${esc(x.name)}</h3></div>${stBadge(x.status==='available'?'not started':x.status)}</div>
+    return `<article class="card college st-${x.status}"><div class="top"><div class="row"><div class="logo">${/^https?:/.test(x.logoUrl||'')?`<img src="${esc(x.logoUrl)}" alt="">`:ini}</div><h3>${esc(x.name)}</h3></div>${x.status==='locked'?`<span class="ci" title="Locked">${ico('lock')}</span>`:x.status==='completed'?`<span class="ci ok pop" title="Completed">${ico('check')}</span>`:stBadge(x.status==='available'?'not started':x.status)}</div>
       ${x.description?`<p class="sm muted">${esc(x.description).slice(0,160)}</p>`:''}${x.campuses.length?`<div class="sm"><b>Campuses:</b> ${esc(x.campuses.join(', '))}</div>`:''}
       ${bar(x.percent,x.status==='completed')}<div class="sm muted">${x.lessonsDone}/${x.lessonsTotal} lessons, ${x.assessDone}/${x.assessTotal} assessments</div><div class="foot">${foot}</div></article>`}).join('');
-  return `<div class="page-h"><div><h1>Welcome, ${esc(first(d.user.fullName))}</h1><p class="muted">${esc(d.user.jobTitle||'')}${d.manager?`. Your manager is ${esc(d.manager.fullName)}.`:''}</p></div></div>${panel}
-  <div class="stats"><div class="stat"><b>${d.overall}%</b>Overall training progress</div><div class="stat"><b>${d.completedColleges}/${d.totalColleges}</b>Colleges completed</div><div class="stat"><b>${d.upcoming.length}</b>Assessments waiting</div></div>
+  const hr=new Date().getHours(),greet=hr<12?'Good morning':hr<17?'Good afternoon':'Good evening';
+  return `<div class="page-h hero-h"><div><p class="eyebrow">${greet}</p><h1>Welcome, ${esc(first(d.user.fullName))}</h1><p class="muted">${esc(d.user.jobTitle||'')}${d.manager?`. Your manager is ${esc(d.manager.fullName)}.`:''}</p></div><div class="overall">${ring(d.overall,92)}<span class="sm muted">Overall progress</span></div></div>${panel}
+  <div class="stats"><div class="stat"><span class="si">${ico('flag')}</span><b>${d.completedColleges}/${d.totalColleges}</b>Colleges completed</div><div class="stat"><span class="si">${ico('clip')}</span><b data-count="${d.upcoming.length}">${d.upcoming.length}</b>Assessments waiting</div><div class="stat"><span class="si">${ico('book')}</span><b style="font-size:1.15rem;line-height:1.7">${d.active?esc(d.active.name):'None yet'}</b>Now training</div></div>
   <h2 style="margin-bottom:12px">Colleges and universities</h2>${c.length?`<div class="grid g3">${cards}</div>`:'<div class="empty">No colleges have been published yet. Your administrator is still setting up the training.</div>'}
   <div class="grid g2" style="margin-top:24px"><div class="card"><h2>Upcoming assessments</h2>${d.upcoming.length?d.upcoming.map(a=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><div><b>${esc(a.name)}</b><div class="sm muted">Pass mark ${esc(a.passPercent)}%${a.attemptsLeft!=null?`, ${a.attemptsLeft} attempt(s) left`:''}</div></div><a class="btn sm" href="#/college/${esc(a.collegeId)}">Open</a></div>`).join(''):'<p class="muted">Nothing waiting. Assessments for your active college appear here.</p>'}</div>
   <div class="card"><h2>Notifications</h2>${d.notifications.length?d.notifications.map(n=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${esc(n.title)}</b><div class="sm">${esc(n.body)}</div><div class="sm muted">${fd(n.createdAt)}</div></div>`).join(''):'<p class="muted">No announcements.</p>'}</div></div>
@@ -435,27 +552,34 @@ async function vAssess(id){
     else if(q.type==='tf')inp=['true','false'].map(v=>`<label class="opt"><input type="radio" name="q_${esc(q.questionId)}" value="${v}"> ${v==='true'?'True':'False'}</label>`).join('');
     else inp=`<input type="text" name="q_${esc(q.questionId)}" autocomplete="off" placeholder="Your answer">`;
     return `<div class="card q" data-q="${esc(q.questionId)}" data-t="${esc(q.type)}"><b>${i+1}. ${esc(q.text)}</b> <span class="sm muted">(${esc(q.marks)} mark${q.marks==1?'':'s'}${q.type==='multi'?', select all that apply':''})</span><div class="opts">${inp}</div></div>`}).join('');
+  const skey='hs_ans_'+a.attemptId;   // answers are also kept on this device, so a refresh or a slow server never loses them
+  const collect=()=>{const ans={};$$('.q').forEach(el=>{const id=el.dataset.q,t=el.dataset.t;
+      if(t==='multi')ans[id]=$$('input:checked',el).map(x=>x.value);else if(t==='short')ans[id]=$('input',el).value;else{const c=$('input:checked',el);ans[id]=c?c.value:''}});return ans};
+  const saveLocal=()=>{try{localStorage.setItem(skey,JSON.stringify(collect()))}catch(e){}};
   const submit=async(auto)=>{
-    const ans={};$$('.q').forEach(el=>{const id=el.dataset.q,t=el.dataset.t;
-      if(t==='multi')ans[id]=$$('input:checked',el).map(x=>x.value);else if(t==='short')ans[id]=$('input',el).value;else{const c=$('input:checked',el);ans[id]=c?c.value:''}});
+    const ans=collect();
     if(!auto&&!await confirmDlg('Submit your answers? You cannot change them afterwards.','Submit'))return;
-    clearInterval(window.__tm);const r=await api('emp.submitAssessment',{attemptId:a.attemptId,answers:ans});$('#main').innerHTML=resultHtml(a,r);
+    clearInterval(window.__tm);const r=await api('emp.submitAssessment',{attemptId:a.attemptId,answers:ans});try{localStorage.removeItem(skey)}catch(e){}$('#main').innerHTML=resultHtml(a,r);animateCounts();if(r.passed)celebrate();
   };
   window.__submit=submit;
   return {html:`<div class="page-h"><div><h1>${esc(a.assessment.name)}</h1><p class="muted">Attempt ${esc(a.attemptNo)}. Pass mark ${esc(a.assessment.passPercent)}%. Total ${esc(a.totalMarks)} marks.</p></div></div>
     <div class="timer"><span>${a.questions.length} questions</span><b id="clock">${dl?'':'No time limit'}</b></div>${qh}<button class="btn pri" data-a="submitasm">Submit answers</button>`,
-    after(){ clearInterval(window.__tm); if(dl){const tick=()=>{const s=Math.max(0,Math.round((dl-Date.now())/1000));const c=$('#clock');if(!c){clearInterval(window.__tm);return}c.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')} left`;if(s<=0){clearInterval(window.__tm);toast('Time is up. Submitting your answers.');submit(true).catch(e=>toast(e.message,'err'))}};tick();window.__tm=setInterval(tick,1000)} }};
+    after(){ clearInterval(window.__tm);
+      try{const saved=JSON.parse(localStorage.getItem(skey)||'null');if(saved)$$('.q').forEach(el=>{const v=saved[el.dataset.q];if(v===undefined)return;
+        if(el.dataset.t==='multi')$$('input',el).forEach(i=>i.checked=(v||[]).includes(i.value));else if(el.dataset.t==='short')$('input',el).value=v||'';else $$('input',el).forEach(i=>i.checked=i.value===v)})}catch(e){}
+      $$('.q').forEach(el=>{el.addEventListener('change',saveLocal);el.addEventListener('input',saveLocal)});
+      if(dl){const tick=()=>{const s=Math.max(0,Math.round((dl-Date.now())/1000));const c=$('#clock');if(!c){clearInterval(window.__tm);return}c.textContent=`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')} left`;if(s<=0){clearInterval(window.__tm);toast('Time is up. Submitting your answers.');submit(true).catch(e=>toast(e.message,'err'))}};tick();window.__tm=setInterval(tick,1000)} }};
 }
 ACT.submitasm=()=>window.__submit(false);
 function resultHtml(a,r){
-  return `<div class="page-h"><h1>${esc(a.assessment.name)}</h1></div><div class="card" style="text-align:center"><div class="score">${esc(r.score)}/${esc(r.totalMarks)}</div><p>${esc(r.percent)}%. Pass mark ${esc(r.passPercent)}%.</p>${r.expired?badge('Time expired','bad'):r.passed?badge('Passed','ok'):badge('Not passed','bad')}${r.unlocked?'<p style="margin-top:12px"><b>You completed this college. Other colleges are now unlocked.</b></p>':''}<p style="margin-top:14px"><a class="btn pri" href="#/">Back to dashboard</a></p></div>
+  return `<div class="page-h"><h1>${esc(a.assessment.name)}</h1></div><div class="card" style="text-align:center"><div class="score"><span data-count="${esc(r.score)}">${esc(r.score)}</span>/${esc(r.totalMarks)}</div><p>${esc(r.percent)}%. Pass mark ${esc(r.passPercent)}%.</p>${r.expired?badge('Time expired','bad'):r.passed?badge('Passed','ok'):badge('Not passed','bad')}${r.unlocked?'<p style="margin-top:12px"><b>You completed this college. Other colleges are now unlocked.</b></p>':''}<p style="margin-top:14px"><a class="btn pri" href="#/">Back to dashboard</a></p></div>
   ${r.review?`<h2 style="margin:20px 0 10px">Review</h2>${r.review.map((x,i)=>`<div class="card" style="margin-bottom:10px"><b>${i+1}. ${esc(x.text)}</b> ${x.correct?badge('Correct','ok'):badge('Incorrect','bad')}${x.yourAnswer!==undefined?`<div class="sm">Your answer: ${esc(x.yourAnswer)||'<i>none</i>'}</div><div class="sm">Correct answer: ${esc(x.correctAnswer)}</div>`:''}${x.explanation?`<p class="sm muted">${esc(x.explanation)}</p>`:''}</div>`).join('')}`:''}`;
 }
 
 /* ================= MANAGER ================= */
 async function vTeam(){
   const d=await api('mgr.team'),s=d.summary;
-  return `<div class="page-h"><h1>My team</h1></div><div class="stats"><div class="stat"><b>${s.total}</b>Assigned employees</div><div class="stat"><b>${s.started}</b>Started training</div><div class="stat"><b>${s.completed}</b>Completed all</div><div class="stat"><b>${s.pendingTraining}</b>Pending training</div>${s.awaitingApproval?`<div class="stat"><b>${s.awaitingApproval}</b>Awaiting approval</div>`:''}</div>
+  return `<div class="page-h"><h1>My team</h1></div><div class="stats"><div class="stat"><b data-count="${s.total}">${s.total}</b>Assigned employees</div><div class="stat"><b data-count="${s.started}">${s.started}</b>Started training</div><div class="stat"><b data-count="${s.completed}">${s.completed}</b>Completed all</div><div class="stat"><b data-count="${s.pendingTraining}">${s.pendingTraining}</b>Pending training</div>${s.awaitingApproval?`<div class="stat"><b data-count="${s.awaitingApproval}">${s.awaitingApproval}</b>Awaiting approval</div>`:''}</div>
   ${table(['Employee','Active college','Colleges done','Progress','Avg score','Last activity',''],d.employees.map(e=>[`<b>${esc(e.fullName)}</b><div class="sm muted">${esc(e.jobTitle)}</div>`,esc(e.activeCollege||'—'),`${e.collegesCompleted}/${e.totalColleges}`,`<div style="min-width:110px">${bar(e.overall)}<span class="sm">${e.overall}%</span></div>`,e.avgScore==null?'—':e.avgScore+'%',fd(e.lastActivity),`<a class="btn sm" href="#/employee/${esc(e.userId)}">Report</a>`]),'No employees are assigned to you yet.')}`;
 }
 async function vEmpReport(id){
@@ -479,12 +603,14 @@ async function adminSave(table,item){const r=await api('admin.save',{table,item}
 
 async function vAdminHome(){
   const s=await api('admin.stats'),pct=s.questionTarget?Math.min(100,Math.round(s.activeQuestions*100/s.questionTarget)):0;
-  const empty=!s.collegesTotal;
-  return `<div class="page-h"><h1>Overview</h1></div>
-  ${empty?`<div class="alert"><b>College data is awaiting import.</b> No colleges exist yet. Add them under <a href="#/colleges">Colleges</a>, or load your master training document there. Nothing is pre-filled, so no college details are invented.</div>`:''}
-  <div class="stats"><div class="stat"><b>${s.pendingUsers}</b>Accounts awaiting approval</div><div class="stat"><b>${s.activeUsers}</b>Active users</div><div class="stat"><b>${s.colleges}</b>Published colleges</div><div class="stat"><b>${s.modules}</b>Published modules</div><div class="stat"><b>${s.assessments}</b>Published assessments</div></div>
-  <div class="card"><h2>Question bank</h2><p><b>${s.activeQuestions.toLocaleString()}</b> active questions of a target of <b>${s.questionTarget.toLocaleString()}</b>. <b>${s.questionsRemaining.toLocaleString()}</b> remaining.</p>${bar(pct)}<p class="sm muted" style="margin-top:8px">These are real imported records. Nothing is generated to reach the target.</p></div>
-  <div class="row" style="margin-top:16px">${s.pendingUsers?`<a class="btn pri" href="#/users">Review ${s.pendingUsers} pending account(s)</a>`:''}<a class="btn" href="#/colleges">Manage colleges</a><a class="btn" href="#/import">Import questions</a></div>`;
+  const tile=(ic,n,l,h)=>`<a class="stat lift" href="${h}"><span class="si">${ico(ic)}</span><b data-count="${n}">${n}</b>${l}</a>`;
+  const steps=[['Publish a college',s.colleges>0,'#/colleges'],['Publish a module that has a lesson',s.modules>0,'#/modules'],['Add questions',s.activeQuestions>0,'#/questions'],['Publish an assessment',s.assessments>0,'#/assessments'],['No accounts waiting for approval',s.pendingUsers===0,'#/users']],done=steps.filter(x=>x[1]).length;
+  return `<div class="page-h"><div><h1>Overview</h1><p class="muted">${done===steps.length?'Everything is set up. Employees can train.':`${done} of ${steps.length} setup steps done.`}</p></div></div>
+  ${!s.collegesTotal?`<div class="alert"><b>College data is awaiting import.</b> No colleges exist yet. Add them under <a href="#/colleges">Colleges</a>, or use Bulk import. Nothing is pre-filled, so no college details are invented.</div>`:''}
+  <div class="stats">${tile('clock',s.pendingUsers,'Accounts awaiting approval','#/users')}${tile('users',s.activeUsers,'Active users','#/users')}${tile('building',s.colleges,'Published colleges','#/colleges')}${tile('book',s.modules,'Published modules','#/modules')}${tile('clip',s.assessments,'Published assessments','#/assessments')}</div>
+  <div class="grid g2"><div class="card"><h2>Setup checklist</h2><ul class="steps">${steps.map(([t,ok,h])=>`<li class="${ok?'done':''}"><span class="tk">${ok?ico('check'):''}</span><a href="${h}">${esc(t)}</a></li>`).join('')}</ul></div>
+   <div class="card qcard">${ring(pct,108)}<div><h2>Question bank</h2><p><b>${s.activeQuestions.toLocaleString()}</b> active of a ${s.questionTarget.toLocaleString()} target. <b>${s.questionsRemaining.toLocaleString()}</b> remaining.</p><p class="sm muted">These are real imported records. Nothing is generated to reach the target.</p></div></div></div>
+  <div class="row" style="margin-top:16px">${s.pendingUsers?`<a class="btn pri" href="#/users">Review ${s.pendingUsers} pending account(s)</a>`:''}<a class="btn" href="#/colleges">Manage colleges</a><a class="btn" href="#/import">Bulk import</a></div>`;
 }
 
 /* --- users --- */
@@ -726,7 +852,7 @@ document.addEventListener('change',async e=>{
   if(e.target.id==='tplcol'){fillTplMods();return}
   if(e.target.id!=='impfile'||!e.target.files[0])return;const kind=e.target.dataset.k,B=BULK[kind],f=e.target.files[0],out=$('#impout');
   try{
-    if(!window.XLSX)throw new Error('The spreadsheet reader could not load. Check your internet connection and reload.');
+    await loadXlsx();
     const wb=XLSX.read(await f.arrayBuffer(),{type:'array',raw:true}),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:'',raw:false});
     const pv=await api(B.prev,kind==='questions'?{rows}:{kind,rows});IMP={rows,name:f.name,pv,kind};
     out.innerHTML=`<div class="stats"><div class="stat"><b>${pv.total}</b>Rows in file</div><div class="stat"><b style="color:var(--ok)">${pv.validCount}</b>Valid</div><div class="stat"><b style="color:var(--bad)">${pv.invalidCount}</b>Invalid</div>${pv.target!==undefined?`<div class="stat"><b>${Math.max(0,pv.target-pv.activeNow-pv.validCount).toLocaleString()}</b>Remaining after import</div>`:''}</div>
@@ -778,12 +904,17 @@ async function vAudit(){
 }
 async function vSettings(){
   const s=await api('admin.getSettings');
-  return `<div class="page-h"><h1>Portal settings</h1></div><div class="card" style="max-width:640px"><form data-form="settings">${[['portalName','Portal name'],['questionTarget','Question bank target'],['passwordMinLength','Minimum password length'],['defaultPassPercent','Default passing percentage'],['supportEmail','Support email'],['employeeEmailDomain','Only allow employee signups from this email domain (optional, e.g. higher.study)']].map(([k,l])=>`<div class="field"><label>${l}</label><input name="${k}" type="text" value="${esc(s[k])}"></div>`).join('')}
+  return `<div class="page-h"><h1>Portal settings</h1></div><div class="card" style="max-width:640px"><form data-form="settings">${[['portalName','Portal name'],['questionTarget','Question bank target'],['passwordMinLength','Minimum password length'],['defaultPassPercent','Default passing percentage'],['supportEmail','Support email'],['rateLimitPerMin','Max requests per person per minute (protects the server from floods)'],['employeeEmailDomain','Only allow employee signups from this email domain (optional, e.g. higher.study)']].map(([k,l])=>`<div class="field"><label>${l}</label><input name="${k}" type="text" value="${esc(s[k])}"></div>`).join('')}
   <label class="chk" style="margin-bottom:10px"><input type="checkbox" name="allowRegistration" ${bool(s.allowRegistration)?'checked':''}> Allow new registrations</label><label class="chk" style="margin-bottom:14px"><input type="checkbox" name="employeeAutoApprove" ${bool(s.employeeAutoApprove)?'checked':''}> Employees can sign in immediately (managers always need approval)</label><button class="btn pri" type="submit">Save settings</button></form></div>`;
 }
 FORM.settings=async f=>{const d=Object.fromEntries(new FormData(f));d.allowRegistration=!!$('[name=allowRegistration]',f).checked;d.employeeAutoApprove=!!$('[name=employeeAutoApprove]',f).checked;await api('admin.saveSettings',d);toast('Settings saved')};
 
 /* ---------- boot ---------- */
+window.addEventListener('offline',()=>netMsg('You are offline. Reconnect to continue.'));
+window.addEventListener('online',()=>{netMsg(null);toast('Back online')});
+let lastErr=0;
+window.addEventListener('unhandledrejection',e=>{e.preventDefault();if(Date.now()-lastErr>4000){lastErr=Date.now();toast((e.reason&&e.reason.message)||'Something went wrong. Please try again.','err')}});
+window.addEventListener('error',e=>{if(Date.now()-lastErr>4000){lastErr=Date.now();toast('Something went wrong. Please refresh the page.','err')}});
 (async function boot(){
   if(!S.token){route();return}                       // the sign-in screen draws at once and loads the manager list in the background
   $('#app').innerHTML='<div class="auth"><div class="card"><h1>Higher.Study</h1><p class="muted">Loading your dashboard…</p></div></div>';
